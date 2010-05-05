@@ -1,7 +1,8 @@
-
+#!/usr/bin/ruby
 require 'rubygems'
 require 'mechanize'
 require 'icalendar'
+require 'active_support'
 
 class String
   ACCENTS_MAPPING = {
@@ -45,14 +46,12 @@ class Parser
   def self.parse(url = "http://globoesporte.globo.com/Esportes/Futebol/TabelaJogos/Sao_Paulo/0,,EEJ0-9875,00.html")
     cal = Icalendar::Calendar.new
     
-    month = ""
     year = Time.now.year
     
     agent = Mechanize.new
     agent.get(url)
     full_table = agent.page.search(".conteudo-resultados")
     full_table.children.each do |item|
-      month = item.text if item.name == "h5"
       
       if item.name == "ul" && item[:class] == "lista2"
         item.children.first.children.search(".horario").text =~ /.*(\d\d\/\d\d).*/
@@ -62,8 +61,8 @@ class Parser
         times = item.children.search(".time").map(&:text).map(&:strip)
         placar = item.children.search(".placar").text.strip
         
-        initial_date = DateTime.strptime("#{day}/#{year} #{hour}", "%d/%m/%Y %H:%M")
-        final_date = initial_date + 2 / 24.0
+        initial_date = DateTime.strptime("#{day}/#{year} #{hour}", "%d/%m/%Y %H:%M") - 3.hours
+        final_date = initial_date + 2.hours
         
         cal.event do
           dtstart initial_date
